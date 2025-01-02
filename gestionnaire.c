@@ -11,18 +11,15 @@ typedef struct {
     int quantite;
 } Produit;
 
-void ajouterElements(Produit inventaire[], int *nombreDarticles);
-void chercherProduit(Produit inventaire[], int nombreDarticles) ;
-void modifierProduit(Produit inventaire[], int nombreDarticles);
-void supprimerProduit(Produit inventaire[], int *nombreDarticles);
-void sauvegarderInventaire(Produit inventaire[], int nombreDarticles);
-void chargerInventaire(Produit inventaire[], int *nombreDarticles);
 
 int main() {
+    // Menu 
+    printf("===================Bienvenue ! Il s'agit d'un gestionaire d'inventaire afin de permettre une meilleure organisation de votre magasin ==================\n");
+    FILE *file = fopen("Gestionnaire.bin","ab+");
     int nombreDarticles = 0;
     
     // Demander la capacité maximale du magasin
-    printf("Quelle est la capacité maximale de votre magasin ?\n");
+    printf("Quelle est la capacite maximale de votre magasin ?\n");
     scanf("%d", &C);
     
     // Allouer de la mémoire pour l'inventaire
@@ -36,6 +33,29 @@ int main() {
 
    // Libérer la mémoire allouée
     free(inventaire);
+    // Affichage de l'inventaire actuellement présent dans le fichier
+    printf("Voici l'inventaire actuelle de votre magasin \n");
+    affichageInventaire(file);
+
+    // Menu pour le choix de l'opération a effectuer 
+    printf("Que souhaitez vous faire ? \n Tapez : \n 1- Ajouter des produits \n 2- Modifiez la quantite ou le prix \n 3- Supprimez les produits \n 4-Recherchez les produits \n ");
+    int make;
+    scanf("%d",&make);
+    switch (make)
+    {
+    case 1:
+        ajouterElements(file,inventaire,&nombreDarticles);
+        break;
+    case 2:
+        modifierProduit(file,inventaire,&nombreDarticles);
+        break;
+    case 3:
+        supprimerProduit(file,inventaire,&nombreDarticles);
+        break;
+    case 4:
+        chercherProduit(inventaire,&nombreDarticles);
+        break;
+    }
 
     return 0;
 }
@@ -45,7 +65,7 @@ int main() {
  * - inventaire[] : tableau dynamique contenant les produits.
  * - nombreDarticles : pointeur vers le nombre actuel d'articles.
  */
-void ajouterElements(Produit inventaire[], int *nombreDarticles) {
+void ajouterElements(FILE *file,Produit inventaire[], int *nombreDarticles) {
     if (*nombreDarticles >= C) {
         printf("L'inventaire est plein. Impossible d'ajouter plus de produits.\n");
         return;
@@ -53,15 +73,16 @@ void ajouterElements(Produit inventaire[], int *nombreDarticles) {
         // Demander les informations du produit
         printf("Nom du produit: ");
         scanf("%s", inventaire[*nombreDarticles].nom);
-        printf("Catégorie: ");
+        printf("Categorie: ");
         scanf("%s", inventaire[*nombreDarticles].categorie);
         printf("Prix: ");
         scanf("%f", &inventaire[*nombreDarticles].prix);
-        printf("Quantité: ");
+        printf("Quantite: ");
         scanf("%d", &inventaire[*nombreDarticles].quantite);
 
-        printf("Produit ajouté avec succès !\n");
+        printf("Produit ajoute avec succes !\n");
         (*nombreDarticles)++;
+        fwrite(inventaire,sizeof(Produit),1,file);
     }
 }
 
@@ -73,34 +94,34 @@ void chercherProduit(Produit inventaire[], int nombreDarticles) {
     // Demander à l'utilisateur s'il veut chercher par nom ou catégorie
     printf("Rechercher un produit :\n");
     printf("1. Par nom\n");
-    printf("2. Par catégorie\n");
+    printf("2. Par categorie\n");
     printf("Votre choix : ");
     scanf("%d", &choix);
 
     if (choix == 1) {
-        printf("Entrez le nom du produit à rechercher : ");
+        printf("Entrez le nom du produit a rechercher : ");
         scanf("%s", recherche);
         for (int i = 0; i < nombreDarticles; i++) {
             if (strcmp(inventaire[i].nom, recherche) == 0) {
-                printf("\nProduit trouvé :\n");
+                printf("\nProduit trouve :\n");
                 printf("Nom : %s\n", inventaire[i].nom);
-                printf("Catégorie : %s\n", inventaire[i].categorie);
+                printf("Categorie : %s\n", inventaire[i].categorie);
                 printf("Prix : %.2f\n", inventaire[i].prix);
-                printf("Quantité : %d\n", inventaire[i].quantite);
+                printf("Quantite : %d\n", inventaire[i].quantite);
                 produitTrouve = 1;
             }
         }
     } 
     else if (choix == 2) {
-        printf("Entrez la catégorie à rechercher : ");
+        printf("Entrez la categorie à rechercher : ");
         scanf("%s", recherche);
         for (int i = 0; i < nombreDarticles; i++) {
             if (strcmp(inventaire[i].categorie, recherche) == 0) {
-                printf("\nProduit trouvé :\n");
+                printf("\nProduit trouve :\n");
                 printf("Nom : %s\n", inventaire[i].nom);
-                printf("Catégorie : %s\n", inventaire[i].categorie);
+                printf("Categorie : %s\n", inventaire[i].categorie);
                 printf("Prix : %.2f\n", inventaire[i].prix);
-                printf("Quantité : %d\n", inventaire[i].quantite);
+                printf("Quantite : %d\n", inventaire[i].quantite);
                 produitTrouve = 1;
             }
         }
@@ -112,11 +133,11 @@ void chercherProduit(Produit inventaire[], int nombreDarticles) {
 
     // Si aucun produit n'a été trouvé
     if (!produitTrouve) {
-        printf("Aucun produit correspondant trouvé dans l'inventaire.\n");
+        printf("Aucun produit correspondant trouve dans l'inventaire.\n");
     }
 }
 
-void modifierProduit(Produit inventaire[], int nombreDarticles) {
+void modifierProduit(FILE *file,Produit inventaire[], int nombreDarticles) {
     char nom[50];         // Nom du produit à modifier
     char categorie[50];   // Catégorie du produit à modifier
     int produitTrouve = 0; // Indicateur si le produit a été trouvé
@@ -131,11 +152,11 @@ void modifierProduit(Produit inventaire[], int nombreDarticles) {
     for (int i = 0; i < nombreDarticles; i++) {
         if (strcmp(inventaire[i].nom, nom) == 0 && strcmp(inventaire[i].categorie, categorie) == 0) {
             produitTrouve = 1; // Produit trouvé
-            printf("\nProduit trouvé :\n");
+            printf("\nProduit trouve :\n");
             printf("Nom : %s\n", inventaire[i].nom);
-            printf("Catégorie : %s\n", inventaire[i].categorie);
+            printf("Categorie : %s\n", inventaire[i].categorie);
             printf("Prix actuel : %.2f\n", inventaire[i].prix);
-            printf("Quantité actuelle : %d\n", inventaire[i].quantite);
+            printf("Quantite actuelle : %d\n", inventaire[i].quantite);
 
             // Demander quelle modification effectuer
             printf("\nQue voulez-vous modifier ?\n");
@@ -152,42 +173,43 @@ void modifierProduit(Produit inventaire[], int nombreDarticles) {
             } 
             else if (choix == 2) {
                 // Modifier la quantité
-                printf("Entrez la nouvelle quantité : ");
+                printf("Entrez la nouvelle quantite : ");
                 scanf("%d", &inventaire[i].quantite);
-                printf("La quantité a été mise à jour avec succès.\n");
+                printf("La quantite a été mise à jour avec succes.\n");
             } 
             else {
                 printf("Choix invalide.\n");
             }
             return; // Sortir après modification
         }
+        fwrite(inventaire,sizeof(Produit),1,file);
     }
 
     // Si le produit n'a pas été trouvé
     if (!produitTrouve) {
-        printf("Produit non trouvé dans l'inventaire.\n");
+        printf("Produit non trouve dans l'inventaire.\n");
     }
 }
 
-void supprimerProduit(Produit inventaire[], int *nombreDarticles) {
+void supprimerProduit(FILE *file,Produit inventaire[], int *nombreDarticles) {
     char nom[50];         // Nom du produit à supprimer
     char categorie[50];   // Catégorie du produit à supprimer
     int produitTrouve = 0; // Indicateur si le produit a été trouvé
 
-    printf("Entrez le nom du produit à supprimer : ");
+    printf("Entrez le nom du produit a supprimer : ");
     scanf("%s", nom);
-    printf("Entrez la catégorie du produit : ");
+    printf("Entrez la categorie du produit : ");
     scanf("%s", categorie);
 
     // Parcourir l'inventaire pour trouver le produit
     for (int i = 0; i < *nombreDarticles; i++) {
         if (strcmp(inventaire[i].nom, nom) == 0 && strcmp(inventaire[i].categorie, categorie) == 0) {
             produitTrouve = 1; // Produit trouvé
-            printf("\nProduit trouvé :\n");
+            printf("\nProduit trouve :\n");
             printf("Nom : %s\n", inventaire[i].nom);
-            printf("Catégorie : %s\n", inventaire[i].categorie);
+            printf("Categorie : %s\n", inventaire[i].categorie);
             printf("Prix : %.2f\n", inventaire[i].prix);
-            printf("Quantité : %d\n", inventaire[i].quantite);
+            printf("Quantite : %d\n", inventaire[i].quantite);
 
             // Décalage des éléments suivants pour supprimer le produit
             for (int j = i; j < *nombreDarticles - 1; j++) {
@@ -197,7 +219,7 @@ void supprimerProduit(Produit inventaire[], int *nombreDarticles) {
             // Réduire la taille de l'inventaire
             (*nombreDarticles)--;
 
-            printf("Produit supprimé avec succès.\n");
+            printf("Produit supprime avec succès.\n");
             return; // Sortir après suppression
         }
     }
@@ -206,6 +228,7 @@ void supprimerProduit(Produit inventaire[], int *nombreDarticles) {
     if (!produitTrouve) {
         printf("Produit non trouvé dans l'inventaire.\n");
     }
+    fwrite(inventaire,sizeof(Produit),1,file);
 }
 
 void sauvegarderInventaire(Produit inventaire[], int nombreDarticles) {
@@ -219,25 +242,22 @@ void sauvegarderInventaire(Produit inventaire[], int nombreDarticles) {
 
     // Sauvegarder les produits
     fwrite(inventaire, sizeof(Produit), nombreDarticles, fichier);
-
-    fclose(fichier);
     printf("Inventaire sauvegardé avec succès.\n");
 
     }
 }
 
-void chargerInventaire(Produit inventaire[], int *nombreDarticles) {
-    FILE *fichier = fopen("inventaire.bin", "rb");
-    if (fichier == NULL) {
+void affichageInventaire(FILE *file) {
+    Produit p;
+    if (file == NULL) {
         printf("Erreur d'ouverture du fichier pour le chargement.\n");
         return;
     }else
     {
-        // Charger le nombre d'articles
-        fread(nombreDarticles, sizeof(int), 1, fichier);
-        // Charger les produits
-        fread(inventaire, sizeof(Produit), *nombreDarticles, fichier);
-        fclose(fichier);
+        while (fread(&p, sizeof(Produit), 1, file) == 1) {
+        printf("Nom : %s ; Catégorie : %s ; Prix : %.2f ; Quantité : %d\n", 
+               p.nom, p.categorie, p.prix, p.quantite);
+    }
         printf("Inventaire chargé avec succès.\n");
         
     }
